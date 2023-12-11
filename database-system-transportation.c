@@ -3,6 +3,7 @@
 #include <string.h>
 #include <math.h>
 #include <ctype.h>
+#include <windows.h>
 
 #define SIZE 1000
 #define ANSI_COLOR_RED "\x1b[31m"
