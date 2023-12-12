@@ -1,3 +1,10 @@
+/*
+Semua rumus dan tingkat kategori berdasarkan sumber-sumber berikut:
+1. https://duitpintar.com/mobil-paling-irit-bbm/
+2. https://www.researchgate.net/publication/301678822_Prediction_of_CO_CO2_CH4_and_N2O_vehicle_emissions_from_environmental_impact_assessment_EIA_at_toll_road_of_Krian-Legundi-Bunder_in_East_Java_of_Indonesia
+3. https://www.oto.com/berita-motor/10-pilihan-sepeda-motor-paling-irit-bbm-ada-yang-tembus-60-km-per-liter
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -15,14 +22,14 @@
 #define ANSI_COLOR_RESET "\x1b[0m"
 
 // membuat tipe data enum
-typedef enum conditions
+typedef enum Conditions
 {
     equal,
     bigger,
     smaller,
     bigger_equal,
     smaller_equal
-} condition;
+} conditions;
 
 typedef enum SudahDihitung
 {
@@ -37,7 +44,7 @@ typedef struct Kendaraan
     char bahan_bakar[SIZE];
     char nama[SIZE];
     float jarak_tempuh;
-    float efisiensi;
+    float konsumsi_bahan_bakar;
     float jumlah_emisi[4];
 } kendaraan;
 
@@ -49,7 +56,7 @@ typedef struct ArraySorting
 
 // function declaration
 void display_sdg();
-void display_menu_home(kendaraan **data_kendaraan_rumah_tangga, int jumlah_keluarga, int jumlah_kendaraan[]);
+void display_menu_home();
 void display_menu_analisis_visualisasi(kendaraan **data_kendaraan_rumah_tangga, int jumlah_keluarga, int jumlah_kendaraan[]);
 void display_menu_input(kendaraan **data_kendaraan_rumah_tangga, int jumlah_keluarga, int jumlah_kendaraan[]);
 void display_menu_search(kendaraan **data_kendaraan_rumah_tangga, int jumlah_keluarga, int jumlah_kendaraan[]);
@@ -69,7 +76,7 @@ void display_menu_histogram(kendaraan **data_kendaraan_rumah_tangga, int jumlah_
 void display_menu_sortir(kendaraan **data_kendaraan_rumah_tangga, int jumlah_keluarga, int jumlah_kendaraan[]);
 int count_data(kendaraan **data_kendaraan_rumah_tangga, int jumlah_keluarga, int jumlah_kendaraan[]);
 int count_if_data_str(kendaraan **data_kendaraan_rumah_tangga, int jumlah_keluarga, int jumlah_kendaraan[], int input_count, char str_condition[]);
-int count_if_data_int(kendaraan **data_kendaraan_rumah_tangga, int jumlah_keluarga, int jumlah_kendaraan[], int input_count, condition kondisi, char str_condition[]);
+int count_if_data_int(kendaraan **data_kendaraan_rumah_tangga, int jumlah_keluarga, int jumlah_kendaraan[], int input_count, conditions kondisi, char str_condition[]);
 void sorting(array_sorting array[], int jumlah_keluarga);
 float max_data(kendaraan **data_kendaraan_rumah_tangga, float koef_emisi[3][4], int jumlah_keluarga, int jumlah_kendaraan[], int input_max);
 float min_data(kendaraan **data_kendaraan_rumah_tangga, float koef_emisi[3][4], int jumlah_keluarga, int jumlah_kendaraan[], int input_min);
@@ -85,7 +92,7 @@ void hitung_std_deviasi(kendaraan **data_kendaraan_rumah_tangga, float koef_emis
 int main()
 {
     // inisialisasi variabel
-    int size_model = 0, input_home, input_menu, i, j, k, jumlah_keluarga = 0, tambahan_keluarga, input_hist, jumlah_kendaraan[SIZE], input_analisis, next, pos_kendaraan, pos_keluarga, input_sortir, input_edit, input_olah_data, input_count, input_min, input_max, kategori_pemborosan_mobil[4], kategori_pemborosan_motor[3], kategori_sustainable_mobil[2], kategori_sustainable_motor[2];
+    int size_model = 0, input_home, input_menu, i, j, k, jumlah_keluarga = 0, tambahan_keluarga, input_hist, jumlah_kendaraan[SIZE], input_analisis, next, pos_kendaraan, pos_keluarga, input_sortir, input_edit, input_olah_data, input_search, input_count, input_min, input_max, kategori_pemborosan_mobil[4], kategori_pemborosan_motor[3], kategori_sustainable_mobil[2], kategori_sustainable_motor[2];
     float koef_emisi[3][4] = {{2.59786, 0.00004, 0.46263, 0.00071}, {2.59786, 0.00007, 0.42705, 0.00356}, {2.92490, 0.00016, 0.01186, 0.00008}};
     float sum[6], std_deviasi[6], variansi[6], min, max, editan_f;
     char condition_pertama[SIZE], condition_kedua[SIZE], editan_str[SIZE], temp_str[SIZE];
@@ -100,14 +107,40 @@ int main()
     // inisialisasi variabel tipe data struct
     kendaraan **data_kendaraan_rumah_tangga = malloc(sizeof(kendaraan *));
 
+    // error handling apabila pointer null
+    for (i = 0; i < SIZE; i++)
+    {
+        if (*(model_mobil + i) == NULL)
+        {
+            printf("Alokasi memori tidak berhasil\nProgram akan restart...\n");
+            Sleep(2000);
+            main();
+        }
+    }
+    if (model_mobil == NULL)
+    {
+        printf("Alokasi memori tidak berhasil\nProgram akan restart...\n");
+        Sleep(2000);
+        main();
+    }
+
+    // error handling apabila pointer null
+    if (data_kendaraan_rumah_tangga == NULL)
+    {
+        printf("Alokasi memori tidak berhasil\nProgram akan restart...\n");
+        Sleep(2000);
+        main();
+    }
+
     // inisialisasi variabel tipe data enum
-    condition kondisi = bigger;
+    conditions kondisi = bigger;
     sudah_dihitung dihitung = belum;
 
     // print tampilan awal
     display_sdg();
     printf("\nJudul:\n");
-    printf("Sistem Database dan Perhitungan Pemborosan Energi dalam Kasus Penggunaan Alat Transportasi dalam Rumah Tangga\n");
+    printf("Sistem Database dan Perhitungan Pemborosan Energi dalam Kasus Penggunaan Alat Transportasi dalam Rumah Tangga\n\n");
+    printf("KELOMPOK 3 - SIMALAKAMA\n");
     printf("Anggota:\n");
     printf("   1. Adi Nugroho \t\t\t 2306208546\n");
     printf("   2. Bryan Herdianto \t\t\t 2306210885\n");
@@ -117,7 +150,7 @@ int main()
     scanf("%d", &next);
 
     // print menu home
-    display_menu_home(data_kendaraan_rumah_tangga, jumlah_keluarga, jumlah_kendaraan);
+    display_menu_home();
     scanf("%d", &input_home);
 
     // program akan terus loop sampai user input exit program
@@ -159,6 +192,14 @@ int main()
                         jumlah_kendaraan[i] = atoi(temp_str);
 
                         *(data_kendaraan_rumah_tangga + i) = malloc(jumlah_kendaraan[i] * sizeof(kendaraan));
+
+                        // error handling apabila pointer null
+                        if (*(data_kendaraan_rumah_tangga + j) == NULL)
+                        {
+                            printf("Alokasi memori tidak berhasil\nProgram akan restart...\n");
+                            Sleep(2000);
+                            main();
+                        }
 
                         for (j = 0; j < jumlah_kendaraan[i]; j++)
                         {
@@ -228,16 +269,15 @@ int main()
                             }
                             data_kendaraan_rumah_tangga[i][j].jarak_tempuh = atof(temp_str);
 
-                            printf("\tEfisiensi (dalam satuan persen)\t\t\t: ");
-                            scanf(" %[^\n]s", &temp_str);
-
-                            // error handling
-                            while (!adalah_angka(temp_str))
+                            if (strncmp(data_kendaraan_rumah_tangga[i][j].bahan_bakar, "elektrik", 20) != 0)
                             {
-                                printf(ANSI_COLOR_RED "\tBelum benar... tolong diulang\t\t\t: " ANSI_COLOR_RESET);
-                                scanf(" %[^\n]s", &temp_str);
+                                printf("\tKonsumsi bahan bakar (dalam satuan L/km)\t: ");
+                                scanf("%f", &data_kendaraan_rumah_tangga[i][j].konsumsi_bahan_bakar);
                             }
-                            data_kendaraan_rumah_tangga[i][j].efisiensi = atof(temp_str);
+                            else
+                            {
+                                data_kendaraan_rumah_tangga[i][j].konsumsi_bahan_bakar = 0;
+                            }
 
                             puts("");
                         }
@@ -357,7 +397,7 @@ int main()
                         printf("Kamu mau edit jadi apa: ");
                         scanf("%f", &editan_f);
 
-                        data_kendaraan_rumah_tangga[pos_keluarga - 1][pos_kendaraan - 1].efisiensi = editan_f;
+                        data_kendaraan_rumah_tangga[pos_keluarga - 1][pos_kendaraan - 1].konsumsi_bahan_bakar = editan_f;
                         printf("EDIT BERHASIL\n");
                     }
                     else
@@ -479,9 +519,9 @@ int main()
                     while (next != 1)
                     {
                         printf("Input kolom: ");
-                        scanf("%d", &input_count);
+                        scanf("%d", &input_search);
 
-                        if (input_count == 1 || input_count == 2 || input_count == 3)
+                        if (input_search == 1 || input_search == 2 || input_search == 3)
                         {
                             printf("Tuliskan kondisi IF yang mau: (sama dengan kata apa?)\n");
                             scanf("%s", condition_kedua);
@@ -491,15 +531,15 @@ int main()
                             {
                                 for (j = 0; j < jumlah_kendaraan[i]; j++)
                                 {
-                                    if (input_count == 1 && strncmp(data_kendaraan_rumah_tangga[i][j].kategori, condition_kedua, 20) == 0)
+                                    if (input_search == 1 && strncmp(data_kendaraan_rumah_tangga[i][j].kategori, condition_kedua, 20) == 0)
                                     {
                                         printf("Keluarga ke-%d, Kendaraan ke-%d\n", i + 1, j + 1);
                                     }
-                                    else if (input_count == 2 && strncmp(data_kendaraan_rumah_tangga[i][j].bahan_bakar, condition_kedua, 20) == 0)
+                                    else if (input_search == 2 && strncmp(data_kendaraan_rumah_tangga[i][j].bahan_bakar, condition_kedua, 20) == 0)
                                     {
                                         printf("Keluarga ke-%d, Kendaraan ke-%d\n", i + 1, j + 1);
                                     }
-                                    else if (input_count == 3 && strncmp(data_kendaraan_rumah_tangga[i][j].nama, condition_kedua, 20) == 0)
+                                    else if (input_search == 3 && strncmp(data_kendaraan_rumah_tangga[i][j].nama, condition_kedua, 20) == 0)
                                     {
                                         printf("Keluarga ke-%d, Kendaraan ke-%d\n", i + 1, j + 1);
                                     }
@@ -507,10 +547,10 @@ int main()
                             }
 
                             printf("\nKlik '1' untuk balik ke menu...\n");
-                            printf("Klik '2' untuk melakukan perhitungan count lagi... ");
+                            printf("Klik '2' untuk melakukan search lagi... ");
                             scanf("%d", &next);
                         }
-                        else if (input_count == 4 || input_count == 5)
+                        else if (input_search == 4 || input_search == 5)
                         {
                             printf("Tuliskan kondisi IF yang mau: (>= / <= / < / > / ==)\n");
                             scanf("%s", condition_pertama);
@@ -550,11 +590,11 @@ int main()
                                 {
                                     for (j = 0; j < jumlah_kendaraan[i]; j++)
                                     {
-                                        if (input_count == 4 && data_kendaraan_rumah_tangga[i][j].jarak_tempuh < atoi(condition_kedua))
+                                        if (input_search == 4 && data_kendaraan_rumah_tangga[i][j].jarak_tempuh < atoi(condition_kedua))
                                         {
                                             printf("Keluarga ke-%d, Kendaraan ke-%d\n", i + 1, j + 1);
                                         }
-                                        else if (input_count == 5 && data_kendaraan_rumah_tangga[i][j].efisiensi < atoi(condition_kedua))
+                                        else if (input_search == 5 && data_kendaraan_rumah_tangga[i][j].konsumsi_bahan_bakar < atoi(condition_kedua))
                                         {
                                             printf("Keluarga ke-%d, Kendaraan ke-%d\n", i + 1, j + 1);
                                         }
@@ -567,11 +607,11 @@ int main()
                                 {
                                     for (j = 0; j < jumlah_kendaraan[i]; j++)
                                     {
-                                        if (input_count == 4 && data_kendaraan_rumah_tangga[i][j].jarak_tempuh > atoi(condition_kedua))
+                                        if (input_search == 4 && data_kendaraan_rumah_tangga[i][j].jarak_tempuh > atoi(condition_kedua))
                                         {
                                             printf("Keluarga ke-%d, Kendaraan ke-%d\n", i + 1, j + 1);
                                         }
-                                        else if (input_count == 5 && data_kendaraan_rumah_tangga[i][j].efisiensi > atoi(condition_kedua))
+                                        else if (input_search == 5 && data_kendaraan_rumah_tangga[i][j].konsumsi_bahan_bakar > atoi(condition_kedua))
                                         {
                                             printf("Keluarga ke-%d, Kendaraan ke-%d\n", i + 1, j + 1);
                                         }
@@ -584,11 +624,11 @@ int main()
                                 {
                                     for (j = 0; j < jumlah_kendaraan[i]; j++)
                                     {
-                                        if (input_count == 4 && data_kendaraan_rumah_tangga[i][j].jarak_tempuh == atoi(condition_kedua))
+                                        if (input_search == 4 && data_kendaraan_rumah_tangga[i][j].jarak_tempuh == atoi(condition_kedua))
                                         {
                                             printf("Keluarga ke-%d, Kendaraan ke-%d\n", i + 1, j + 1);
                                         }
-                                        else if (input_count == 5 && data_kendaraan_rumah_tangga[i][j].efisiensi == atoi(condition_kedua))
+                                        else if (input_search == 5 && data_kendaraan_rumah_tangga[i][j].konsumsi_bahan_bakar == atoi(condition_kedua))
                                         {
                                             printf("Keluarga ke-%d, Kendaraan ke-%d\n", i + 1, j + 1);
                                         }
@@ -601,11 +641,11 @@ int main()
                                 {
                                     for (j = 0; j < jumlah_kendaraan[i]; j++)
                                     {
-                                        if (input_count == 4 && data_kendaraan_rumah_tangga[i][j].jarak_tempuh <= atoi(condition_kedua))
+                                        if (input_search == 4 && data_kendaraan_rumah_tangga[i][j].jarak_tempuh <= atoi(condition_kedua))
                                         {
                                             printf("Keluarga ke-%d, Kendaraan ke-%d\n", i + 1, j + 1);
                                         }
-                                        else if (input_count == 5 && data_kendaraan_rumah_tangga[i][j].efisiensi <= atoi(condition_kedua))
+                                        else if (input_search == 5 && data_kendaraan_rumah_tangga[i][j].konsumsi_bahan_bakar <= atoi(condition_kedua))
                                         {
                                             printf("Keluarga ke-%d, Kendaraan ke-%d\n", i + 1, j + 1);
                                         }
@@ -618,11 +658,11 @@ int main()
                                 {
                                     for (j = 0; j < jumlah_kendaraan[i]; j++)
                                     {
-                                        if (input_count == 4 && data_kendaraan_rumah_tangga[i][j].jarak_tempuh >= atoi(condition_kedua))
+                                        if (input_search == 4 && data_kendaraan_rumah_tangga[i][j].jarak_tempuh >= atoi(condition_kedua))
                                         {
                                             printf("Keluarga ke-%d, Kendaraan ke-%d\n", i + 1, j + 1);
                                         }
-                                        else if (input_count == 5 && data_kendaraan_rumah_tangga[i][j].efisiensi >= atoi(condition_kedua))
+                                        else if (input_search == 5 && data_kendaraan_rumah_tangga[i][j].konsumsi_bahan_bakar >= atoi(condition_kedua))
                                         {
                                             printf("Keluarga ke-%d, Kendaraan ke-%d\n", i + 1, j + 1);
                                         }
@@ -630,7 +670,7 @@ int main()
                                 }
 
                                 printf("Klik '1' untuk balik ke menu...\n");
-                                printf("Klik '2' untuk melakukan perhitungan count lagi... ");
+                                printf("Klik '2' untuk melakukan search lagi... ");
                                 scanf("%d", &next);
                             }
                         }
@@ -942,7 +982,7 @@ int main()
                         }
 
                         printf("\nKlik '1' untuk balik ke menu...\n");
-                        printf("Klik '2' untuk melakukan perhitungan count lagi... ");
+                        printf("Klik '2' untuk melakukan sortir lagi... ");
                         scanf("%d", &next);
                     }
 
@@ -968,6 +1008,7 @@ int main()
 
                         for (j = 0; j < jumlah_kendaraan[i]; j++)
                         {
+                        	printf("KENDARAAN KE-%d\n", j + 1);
                             printf("CO2 = %.2f\n", data_kendaraan_rumah_tangga[i][j].jumlah_emisi[0]);
                             printf("N2O = %.2f\n", data_kendaraan_rumah_tangga[i][j].jumlah_emisi[1]);
                             printf("CO  = %.2f\n", data_kendaraan_rumah_tangga[i][j].jumlah_emisi[2]);
@@ -1006,23 +1047,23 @@ int main()
 
                             if (strncmp(data_kendaraan_rumah_tangga[i][j].kategori, "mobil", 10) == 0)
                             {
-                                if (data_kendaraan_rumah_tangga[i][j].efisiensi < 25)
+                                if (data_kendaraan_rumah_tangga[i][j].konsumsi_bahan_bakar >= 0.2)
                                 {
                                     printf("\t\tSANGAT BOROS\n");
                                     printf("\t\t1. Mohon mengecek kondisi mesin di bengkel karena mesinnya sudah rusak akibat sudah kelamaan dipakai\n");
                                     kategori_pemborosan_mobil[0]++;
                                 }
-                                else if (data_kendaraan_rumah_tangga[i][j].efisiensi >= 25 && data_kendaraan_rumah_tangga[i][j].efisiensi < 40)
+                                else if (data_kendaraan_rumah_tangga[i][j].konsumsi_bahan_bakar >= 0.1 && data_kendaraan_rumah_tangga[i][j].konsumsi_bahan_bakar < 0.2)
                                 {
                                     printf("\t\tBOROS\n");
-                                    printf("\t\t1. Hati-hati akan efisiensi mobil yang akan terus turun ke depannya\n");
+                                    printf("\t\t1. Hati-hati akan efisiensi mobil yang akan terus turun / konsumsi bahan bakar yang akan terus naik ke depannya\n");
                                     kategori_pemborosan_mobil[1]++;
                                 }
-                                else if (data_kendaraan_rumah_tangga[i][j].efisiensi >= 40 && data_kendaraan_rumah_tangga[i][j].efisiensi < 50)
+                                else if (data_kendaraan_rumah_tangga[i][j].konsumsi_bahan_bakar >= 0.05 && data_kendaraan_rumah_tangga[i][j].konsumsi_bahan_bakar < 0.1)
                                 {
-                                    printf("\t\tLUMAYAN BOROS\n");
+                                    printf("\t\tLUMAYAN TIDAK BOROS\n");
                                     printf("\t\t1. Sudah mulai hebat!!\n");
-                                    printf("\t\t2. Hati-hati akan efisiensi mobil yang akan terus turun ke depannya\n");
+                                    printf("\t\t2. Hati-hati akan efisiensi mobil yang akan terus turun / konsumsi bahan bakar yang akan terus naik ke depannya\n");
                                     kategori_pemborosan_mobil[2]++;
                                 }
                                 else
@@ -1034,13 +1075,13 @@ int main()
                             }
                             else
                             {
-                                if (data_kendaraan_rumah_tangga[i][j].efisiensi < 25)
+                                if (data_kendaraan_rumah_tangga[i][j].konsumsi_bahan_bakar >= 0.05)
                                 {
                                     printf("\t\tSANGAT BOROS\n");
                                     printf("\t\t1. Mohon mengecek kondisi mesin di bengkel karena mesinnya sudah rusak akibat sudah kelamaan dipakai\n");
                                     kategori_pemborosan_motor[0]++;
                                 }
-                                else if (data_kendaraan_rumah_tangga[i][j].efisiensi >= 25 && data_kendaraan_rumah_tangga[i][j].efisiensi < 50)
+                                else if (data_kendaraan_rumah_tangga[i][j].konsumsi_bahan_bakar >= 0.02 && data_kendaraan_rumah_tangga[i][j].konsumsi_bahan_bakar < 0.05)
                                 {
                                     printf("\t\tBOROS\n");
                                     printf("\t\t2. Hati-hati akan efisiensi motor yang akan terus turun ke depannya\n");
@@ -1057,15 +1098,15 @@ int main()
                     }
 
                     printf("\nMOBIL\n");
-                    printf("\tSANGAT BOROS: %.2f\%\n", 100 * (float)(kategori_pemborosan_mobil[0]) / count_if_data_str(data_kendaraan_rumah_tangga, jumlah_keluarga, jumlah_kendaraan, 1, "mobil"));
-                    printf("\tBOROS: %.2f\%\n", 100 * (float)(kategori_pemborosan_mobil[1]) / count_if_data_str(data_kendaraan_rumah_tangga, jumlah_keluarga, jumlah_kendaraan, 1, "mobil"));
-                    printf("\tLUMAYAN BOROS: %.2f\%\n", 100 * (float)(kategori_pemborosan_mobil[2]) / count_if_data_str(data_kendaraan_rumah_tangga, jumlah_keluarga, jumlah_kendaraan, 1, "mobil"));
-                    printf("\tTIDAK BOROS: %.2f\%\n", 100 * (float)(kategori_pemborosan_mobil[3]) / count_if_data_str(data_kendaraan_rumah_tangga, jumlah_keluarga, jumlah_kendaraan, 1, "mobil"));
+                    printf("\tSANGAT BOROS: %.2f%%\n", 100 * (float)(kategori_pemborosan_mobil[0]) / count_if_data_str(data_kendaraan_rumah_tangga, jumlah_keluarga, jumlah_kendaraan, 1, "mobil"));
+                    printf("\tBOROS: %.2f%%\n", 100 * (float)(kategori_pemborosan_mobil[1]) / count_if_data_str(data_kendaraan_rumah_tangga, jumlah_keluarga, jumlah_kendaraan, 1, "mobil"));
+                    printf("\tLUMAYAN BOROS: %.2f%%\n", 100 * (float)(kategori_pemborosan_mobil[2]) / count_if_data_str(data_kendaraan_rumah_tangga, jumlah_keluarga, jumlah_kendaraan, 1, "mobil"));
+                    printf("\tTIDAK BOROS: %.2f%%\n", 100 * (float)(kategori_pemborosan_mobil[3]) / count_if_data_str(data_kendaraan_rumah_tangga, jumlah_keluarga, jumlah_kendaraan, 1, "mobil"));
 
                     printf("\nMOTOR\n");
-                    printf("\tSANGAT BOROS: %.2f\%\n", 100 * (float)(kategori_pemborosan_motor[0]) / count_if_data_str(data_kendaraan_rumah_tangga, jumlah_keluarga, jumlah_kendaraan, 1, "motor"));
-                    printf("\tBOROS: %.2f\%\n", 100 * (float)(kategori_pemborosan_motor[1]) / count_if_data_str(data_kendaraan_rumah_tangga, jumlah_keluarga, jumlah_kendaraan, 1, "motor"));
-                    printf("\tTIDAK BOROS: %.2f\%\n", 100 * (float)(kategori_pemborosan_motor[2]) / count_if_data_str(data_kendaraan_rumah_tangga, jumlah_keluarga, jumlah_kendaraan, 1, "motor"));
+                    printf("\tSANGAT BOROS: %.2f%%\n", 100 * (float)(kategori_pemborosan_motor[0]) / count_if_data_str(data_kendaraan_rumah_tangga, jumlah_keluarga, jumlah_kendaraan, 1, "motor"));
+                    printf("\tBOROS: %.2f%%\n", 100 * (float)(kategori_pemborosan_motor[1]) / count_if_data_str(data_kendaraan_rumah_tangga, jumlah_keluarga, jumlah_kendaraan, 1, "motor"));
+                    printf("\tTIDAK BOROS: %.2f%%\n", 100 * (float)(kategori_pemborosan_motor[2]) / count_if_data_str(data_kendaraan_rumah_tangga, jumlah_keluarga, jumlah_kendaraan, 1, "motor"));
 
                     printf("Klik '1' untuk balik ke menu... ");
                     scanf("%d", &next);
@@ -1173,13 +1214,23 @@ int main()
         }
 
         // display menu home lagi untuk perulangan
-        display_menu_home(data_kendaraan_rumah_tangga, jumlah_keluarga, jumlah_kendaraan);
+        display_menu_home();
         scanf("%d", &input_home);
     }
 
-    // membebaskan memori yang sudah teralokasi
-    free(data_kendaraan_rumah_tangga);
+    // dealokasi memori untuk array dari string
+    for (i = 0; i < SIZE; i++)
+    {
+        free(*(model_mobil + i));
+    }
     free(model_mobil);
+
+    // dealokasi memori untuk array dari structs
+    for (i = 0; i < jumlah_keluarga; i++)
+    {
+        free(data_kendaraan_rumah_tangga[i]);
+    }
+    free(data_kendaraan_rumah_tangga);
 
     return 0;
 }
@@ -1206,11 +1257,11 @@ void display_data(kendaraan **data_kendaraan_rumah_tangga, int jumlah_keluarga, 
         for (j = 0; j < jumlah_kendaraan[i]; j++)
         {
             printf("\tKENDARAAN KE-%d\n", j + 1);
-            printf("\tKategori\t: %s\n", data_kendaraan_rumah_tangga[i][j].kategori);
-            printf("\tBahan bakar\t: %s\n", data_kendaraan_rumah_tangga[i][j].bahan_bakar);
-            printf("\tNama model\t: %s\n", data_kendaraan_rumah_tangga[i][j].nama);
-            printf("\tJarak tempuh\t: %.2f km\n", data_kendaraan_rumah_tangga[i][j].jarak_tempuh);
-            printf("\tEfisiensi\t: %.2f\%\n", data_kendaraan_rumah_tangga[i][j].efisiensi);
+            printf("\tKategori\t\t: %s\n", data_kendaraan_rumah_tangga[i][j].kategori);
+            printf("\tBahan bakar\t\t: %s\n", data_kendaraan_rumah_tangga[i][j].bahan_bakar);
+            printf("\tNama model\t\t: %s\n", data_kendaraan_rumah_tangga[i][j].nama);
+            printf("\tJarak tempuh\t\t: %.2f km\n", data_kendaraan_rumah_tangga[i][j].jarak_tempuh);
+            printf("\tKonsumsi bahan bakar\t: %.2f L/km\n", data_kendaraan_rumah_tangga[i][j].konsumsi_bahan_bakar);
         }
     }
 }
@@ -1253,15 +1304,14 @@ void display_tentang_program()
     display_sdg();
     printf("\nSDG 7 dibuat karena menyadari bahwa banyak orang masih tidak memiliki akses ke energi yang sustainable. Tanpa energi yang sustainable, lingkungan dapat rusak dan berdampak negatif pada kehidupan. Program ini difokuskan pada sektor transportasi dari SDG 7, dengan tujuan mendorong Target 7.1, yaitu 'Pada 2030, pastikan akses universal terhadap layanan energi yang terjangkau, handal, dan modern' dan juga target 7.b, yaitu 'Pada 2030, perluas infrastruktur dan tingkatkan teknologi untuk menyediakan layanan energi modern dan sustainable untuk semua di negara-negara berkembang, khususnya negara-negara yang paling kurang berkembang, negara-negara kepulauan kecil, dan negara-negara berkembang yang terkurung daratan, sesuai dengan program dukungan masing-masing.'\n");
     printf("\nTransportasi sustainable mengacu pada moda transportasi yang ramah lingkungan, hemat energi, dan terjangkau, termasuk kendaraan listrik dan bahan bakar alternatif, serta bahan bakar domestik. Manfaat transportasi sustainable meliputi penghematan biaya bahan bakar dan kendaraan, serta pengurangan emisi karbon dari pembakaran bahan bakar fosil, yang mengakibatkan polusi udara yang lebih rendah. Oleh karena itu, program ini dirancang untuk mencapai tujuan tersebut.\n");
-    printf("\nPertama, ada sebuah menu yang berisi berbagai opsi untuk memasukkan data atau hasil perhitungan dari data yang ada. Sistem database kemudian akan menerima input tentang penggunaan alat transportasi (motor dan mobil) dari berbagai rumah tangga, seperti jumlah kendaraan dan efisiensi, dll.\n");
+    printf("\nPertama, ada sebuah menu yang berisi berbagai opsi untuk memasukkan data atau hasil perhitungan dari data yang ada. Sistem database kemudian akan menerima input tentang penggunaan alat transportasi (motor dan mobil) dari berbagai rumah tangga, seperti jumlah kendaraan dan konsumsi bahan bakar, dll.\n");
     printf("\nSelanjutnya, output akan menampilkan berbagai parameter sebagai indikator seberapa sustainable rumah tangga dalam hal transportasi. Ini dapat ditampilkan melalui kategori tingkat keberlanjutan rumah tangga, kontribusi terhadap pemborosan energi, dan sebagainya.");
 }
 
-void display_menu_home(kendaraan **data_kendaraan_rumah_tangga, int jumlah_keluarga, int jumlah_kendaraan[])
+void display_menu_home()
 {
     // bentuk menu home
     system("cls");
-    display_data(data_kendaraan_rumah_tangga, jumlah_keluarga, jumlah_kendaraan);
     printf("============================================================================\n");
     printf("|                                Menu Home                                 |\n");
     printf("============================================================================\n");
@@ -1319,7 +1369,7 @@ void display_menu_sum(kendaraan **data_kendaraan_rumah_tangga, int jumlah_keluar
     printf("============================================================================\n");
     printf("| Pilihlah kolom yang ingin dicari sum:                                    |\n");
     printf("| 1. Jarak tempuh                                                          |\n");
-    printf("| 2. Efisiensi                                                             |\n");
+    printf("| 2. Konsumsi bahan bakar                                                  |\n");
     printf("| 3. Jumlah emisi CO2                                                      |\n");
     printf("| 4. Jumlah emisi CO                                                       |\n");
     printf("| 5. Jumlah emisi N2O                                                      |\n");
@@ -1339,7 +1389,7 @@ void display_menu_search(kendaraan **data_kendaraan_rumah_tangga, int jumlah_kel
     printf("| 2. Bahan Bakar                                                           |\n");
     printf("| 3. Nama model                                                            |\n");
     printf("| 4. Jarak tempuh                                                          |\n");
-    printf("| 5. Efisiensi                                                             |\n");
+    printf("| 5. Konsumsi bahan bakar                                                  |\n");
     printf("============================================================================\n");
 }
 
@@ -1352,7 +1402,7 @@ void display_menu_min(kendaraan **data_kendaraan_rumah_tangga, int jumlah_keluar
     printf("============================================================================\n");
     printf("| Pilihlah kolom yang ingin dicari minimal:                                |\n");
     printf("| 1. Jarak tempuh                                                          |\n");
-    printf("| 2. Efisiensi                                                             |\n");
+    printf("| 2. Konsumsi bahan bakar                                                  |\n");
     printf("| 3. Jumlah emisi CO2                                                      |\n");
     printf("| 4. Jumlah emisi CO                                                       |\n");
     printf("| 5. Jumlah emisi N2O                                                      |\n");
@@ -1369,7 +1419,7 @@ void display_menu_max(kendaraan **data_kendaraan_rumah_tangga, int jumlah_keluar
     printf("============================================================================\n");
     printf("| Pilihlah kolom yang ingin dicari maksimal:                               |\n");
     printf("| 1. Jarak tempuh                                                          |\n");
-    printf("| 2. Efisiensi                                                             |\n");
+    printf("| 2. Konsumsi bahan bakar                                                  |\n");
     printf("| 3. Jumlah emisi CO2                                                      |\n");
     printf("| 4. Jumlah emisi CO                                                       |\n");
     printf("| 5. Jumlah emisi N2O                                                      |\n");
@@ -1386,7 +1436,7 @@ void display_menu_var(kendaraan **data_kendaraan_rumah_tangga, int jumlah_keluar
     printf("============================================================================\n");
     printf("| Pilihlah kolom yang ingin dicari variansi:                               |\n");
     printf("| 1. Jarak tempuh                                                          |\n");
-    printf("| 2. Efisiensi                                                             |\n");
+    printf("| 2. Konsumsi bahan bakar                                                  |\n");
     printf("| 3. Jumlah emisi CO2                                                      |\n");
     printf("| 4. Jumlah emisi CO                                                       |\n");
     printf("| 5. Jumlah emisi N2O                                                      |\n");
@@ -1403,7 +1453,7 @@ void display_menu_std(kendaraan **data_kendaraan_rumah_tangga, int jumlah_keluar
     printf("============================================================================\n");
     printf("| Pilihlah kolom yang ingin dicari standar deviasi:                        |\n");
     printf("| 1. Jarak tempuh                                                          |\n");
-    printf("| 2. Efisiensi                                                             |\n");
+    printf("| 2. Konsumsi bahan bakar                                                  |\n");
     printf("| 3. Jumlah emisi CO2                                                      |\n");
     printf("| 4. Jumlah emisi CO                                                       |\n");
     printf("| 5. Jumlah emisi N2O                                                      |\n");
@@ -1423,7 +1473,7 @@ void display_menu_edit(kendaraan **data_kendaraan_rumah_tangga, int jumlah_kelua
     printf("| 2. Bahan Bakar                                                           |\n");
     printf("| 3. Nama model                                                            |\n");
     printf("| 4. Jarak tempuh                                                          |\n");
-    printf("| 5. Efisiensi                                                             |\n");
+    printf("| 5. Konsumsi bahan bakar                                                  |\n");
     printf("============================================================================\n");
 }
 
@@ -1465,7 +1515,7 @@ void display_menu_count_kedua(kendaraan **data_kendaraan_rumah_tangga, int jumla
     printf("| 2. Bahan Bakar                                                           |\n");
     printf("| 3. Nama model                                                            |\n");
     printf("| 4. Jarak tempuh                                                          |\n");
-    printf("| 5. Efisiensi                                                             |\n");
+    printf("| 5. Konsumsi bahan bakar                                                  |\n");
     printf("============================================================================\n");
 }
 
@@ -1481,7 +1531,7 @@ void display_menu_countif(kendaraan **data_kendaraan_rumah_tangga, int jumlah_ke
     printf("| 2. Bahan Bakar                                                           |\n");
     printf("| 3. Nama model                                                            |\n");
     printf("| 4. Jarak tempuh                                                          |\n");
-    printf("| 5. Efisiensi                                                             |\n");
+    printf("| 5. Konsumsi bahan bakar                                                  |\n");
     printf("============================================================================\n");
 }
 
@@ -1526,9 +1576,9 @@ float max_data(kendaraan **data_kendaraan_rumah_tangga, float koef_emisi[3][4], 
         {
             for (j = 0; j < jumlah_kendaraan[i]; j++)
             {
-                if (max < data_kendaraan_rumah_tangga[i][j].efisiensi)
+                if (max < data_kendaraan_rumah_tangga[i][j].konsumsi_bahan_bakar)
                 {
-                    max = data_kendaraan_rumah_tangga[i][j].efisiensi;
+                    max = data_kendaraan_rumah_tangga[i][j].konsumsi_bahan_bakar;
                 }
             }
         }
@@ -1563,14 +1613,14 @@ void hitung_emisi(kendaraan **data_kendaraan_rumah_tangga, float koef_emisi[3][4
             {
                 for (k = 0; k < 4; k++)
                 {
-                    data_kendaraan_rumah_tangga[i][j].jumlah_emisi[k] = data_kendaraan_rumah_tangga[i][j].jarak_tempuh * data_kendaraan_rumah_tangga[i][j].efisiensi * koef_emisi[0][k];
+                    data_kendaraan_rumah_tangga[i][j].jumlah_emisi[k] = data_kendaraan_rumah_tangga[i][j].jarak_tempuh * data_kendaraan_rumah_tangga[i][j].konsumsi_bahan_bakar * koef_emisi[0][k];
                 }
             }
             else if (strncmp(data_kendaraan_rumah_tangga[i][j].kategori, "mobil", 5) == 0 && strncmp(data_kendaraan_rumah_tangga[i][j].bahan_bakar, "solar", 5) == 0)
             {
                 for (k = 0; k < 4; k++)
                 {
-                    data_kendaraan_rumah_tangga[i][j].jumlah_emisi[k] = data_kendaraan_rumah_tangga[i][j].jarak_tempuh * data_kendaraan_rumah_tangga[i][j].efisiensi * koef_emisi[2][k];
+                    data_kendaraan_rumah_tangga[i][j].jumlah_emisi[k] = data_kendaraan_rumah_tangga[i][j].jarak_tempuh * data_kendaraan_rumah_tangga[i][j].konsumsi_bahan_bakar * koef_emisi[2][k];
                 }
             }
             else if (strncmp(data_kendaraan_rumah_tangga[i][j].kategori, "mobil", 5) == 0 && strncmp(data_kendaraan_rumah_tangga[i][j].bahan_bakar, "elektrik", 10) == 0)
@@ -1584,7 +1634,7 @@ void hitung_emisi(kendaraan **data_kendaraan_rumah_tangga, float koef_emisi[3][4
             {
                 for (k = 0; k < 4; k++)
                 {
-                    data_kendaraan_rumah_tangga[i][j].jumlah_emisi[k] = data_kendaraan_rumah_tangga[i][j].jarak_tempuh * data_kendaraan_rumah_tangga[i][j].efisiensi * koef_emisi[1][k];
+                    data_kendaraan_rumah_tangga[i][j].jumlah_emisi[k] = data_kendaraan_rumah_tangga[i][j].jarak_tempuh * data_kendaraan_rumah_tangga[i][j].konsumsi_bahan_bakar * koef_emisi[1][k];
                 }
             }
             else if (strncmp(data_kendaraan_rumah_tangga[i][j].kategori, "motor", 5) == 0 && strncmp(data_kendaraan_rumah_tangga[i][j].bahan_bakar, "elektrik", 10) == 0)
@@ -1619,7 +1669,7 @@ void hitung_sum(kendaraan **data_kendaraan_rumah_tangga, float koef_emisi[3][4],
         {
             for (j = 0; j < jumlah_kendaraan[i]; j++)
             {
-                sum[input_olah_data - 1] += data_kendaraan_rumah_tangga[i][j].efisiensi;
+                sum[input_olah_data - 1] += data_kendaraan_rumah_tangga[i][j].konsumsi_bahan_bakar;
             }
         }
     }
@@ -1668,7 +1718,7 @@ void hitung_variansi(kendaraan **data_kendaraan_rumah_tangga, float koef_emisi[3
         {
             for (j = 0; j < jumlah_kendaraan[i]; j++)
             {
-                sigma += pow(data_kendaraan_rumah_tangga[i][j].efisiensi - rata_rata, 2);
+                sigma += pow(data_kendaraan_rumah_tangga[i][j].konsumsi_bahan_bakar - rata_rata, 2);
             }
         }
     }
@@ -1738,7 +1788,7 @@ int count_if_data_str(kendaraan **data_kendaraan_rumah_tangga, int jumlah_keluar
 }
 
 // function buat hitung count apabila datanya dalam tipe integer
-int count_if_data_int(kendaraan **data_kendaraan_rumah_tangga, int jumlah_keluarga, int jumlah_kendaraan[], int input_count, condition kondisi, char str_condition[])
+int count_if_data_int(kendaraan **data_kendaraan_rumah_tangga, int jumlah_keluarga, int jumlah_kendaraan[], int input_count, conditions kondisi, char str_condition[])
 {
     int count = 0, i, j;
 
@@ -1754,7 +1804,7 @@ int count_if_data_int(kendaraan **data_kendaraan_rumah_tangga, int jumlah_keluar
                 {
                     count += 1;
                 }
-                else if (input_count == 5 && data_kendaraan_rumah_tangga[i][j].efisiensi < num_condition)
+                else if (input_count == 5 && data_kendaraan_rumah_tangga[i][j].konsumsi_bahan_bakar < num_condition)
                 {
                     count += 1;
                 }
@@ -1771,7 +1821,7 @@ int count_if_data_int(kendaraan **data_kendaraan_rumah_tangga, int jumlah_keluar
                 {
                     count += 1;
                 }
-                else if (input_count == 5 && data_kendaraan_rumah_tangga[i][j].efisiensi > num_condition)
+                else if (input_count == 5 && data_kendaraan_rumah_tangga[i][j].konsumsi_bahan_bakar > num_condition)
                 {
                     count += 1;
                 }
@@ -1788,7 +1838,7 @@ int count_if_data_int(kendaraan **data_kendaraan_rumah_tangga, int jumlah_keluar
                 {
                     count += 1;
                 }
-                else if (input_count == 5 && data_kendaraan_rumah_tangga[i][j].efisiensi == num_condition)
+                else if (input_count == 5 && data_kendaraan_rumah_tangga[i][j].konsumsi_bahan_bakar == num_condition)
                 {
                     count += 1;
                 }
@@ -1805,7 +1855,7 @@ int count_if_data_int(kendaraan **data_kendaraan_rumah_tangga, int jumlah_keluar
                 {
                     count += 1;
                 }
-                else if (input_count == 5 && data_kendaraan_rumah_tangga[i][j].efisiensi <= num_condition)
+                else if (input_count == 5 && data_kendaraan_rumah_tangga[i][j].konsumsi_bahan_bakar <= num_condition)
                 {
                     count += 1;
                 }
@@ -1822,7 +1872,7 @@ int count_if_data_int(kendaraan **data_kendaraan_rumah_tangga, int jumlah_keluar
                 {
                     count += 1;
                 }
-                else if (input_count == 5 && data_kendaraan_rumah_tangga[i][j].efisiensi >= num_condition)
+                else if (input_count == 5 && data_kendaraan_rumah_tangga[i][j].konsumsi_bahan_bakar >= num_condition)
                 {
                     count += 1;
                 }
@@ -1904,9 +1954,6 @@ void make_histogram(kendaraan **data_kendaraan_rumah_tangga, int jumlah_keluarga
     }
     else if (input_hist == 3)
     {
-        printf(ANSI_COLOR_BLUE "biru\t= mobil\n" ANSI_COLOR_RESET);
-        printf(ANSI_COLOR_RED "merah\t= motor\n" ANSI_COLOR_RESET);
-
         for (i = 0; i < size_model; i++)
         {
             count_model[i] = count_if_data_str(data_kendaraan_rumah_tangga, jumlah_keluarga, jumlah_kendaraan, input_hist, model_mobil[i]);
@@ -1914,14 +1961,7 @@ void make_histogram(kendaraan **data_kendaraan_rumah_tangga, int jumlah_keluarga
             printf("%s\t", model_mobil[i]);
             for (j = 0; j < count_model[i]; j++)
             {
-                if (strncmp(data_kendaraan_rumah_tangga[i][j].kategori, "mobil", 10) == 0)
-                {
-                    printf(ANSI_COLOR_BLUE "#" ANSI_COLOR_RESET);
-                }
-                else
-                {
-                    printf(ANSI_COLOR_RED "#" ANSI_COLOR_RESET);
-                }
+                printf("#");
             }
             puts("");
         }
@@ -1994,9 +2034,9 @@ float min_data(kendaraan **data_kendaraan_rumah_tangga, float koef_emisi[3][4], 
         {
             for (j = 0; j < jumlah_kendaraan[i]; j++)
             {
-                if (min < data_kendaraan_rumah_tangga[i][j].efisiensi)
+                if (min < data_kendaraan_rumah_tangga[i][j].konsumsi_bahan_bakar)
                 {
-                    min = data_kendaraan_rumah_tangga[i][j].efisiensi;
+                    min = data_kendaraan_rumah_tangga[i][j].konsumsi_bahan_bakar;
                 }
             }
         }
