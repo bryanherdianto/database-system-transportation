@@ -5,6 +5,7 @@ Semua rumus dan tingkat kategori berdasarkan sumber-sumber berikut:
 3. https://www.oto.com/berita-motor/10-pilihan-sepeda-motor-paling-irit-bbm-ada-yang-tembus-60-km-per-liter
 */
 
+// semua library yang dipakai
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
